@@ -1,9 +1,11 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
-#include "parser.h"
-#include "util.h"
 #include <thread>
+
+#include "parser.h"
+#include "thread_pool.h"
+#include "util.h"
 
 /* TODO: add substitutions of paresers, etc */
 /* TODO: better giving file names to servers not to paresers only */
@@ -11,13 +13,13 @@
 class Server
 {
 private:
+	/* TODO: remove *paser --> parser */
 	Parser *parser;
-	int num_cpus = 0;
-	
+	ThreadPool *pool;
 
 public:
 	Server();
-	Server(Parser *concret_parser);
+	Server(Parser *concret_parser, int num_thread);
 	~Server();
 
 	void start();

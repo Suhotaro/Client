@@ -1,7 +1,8 @@
 all: server
 
-server: main.o server.o parser.o
-	g++ -std=c++11 main.o server.o parser.o -o server -pthread
+server: main.o server.o parser.o thread_pool.o buffer.o
+	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o -o server -pthread
+	rm *.o
 
 main.o: main.cpp
 	g++ -std=c++11 -c main.cpp
@@ -11,6 +12,13 @@ server.o: server.cpp
 
 parser.o: parser.cpp
 	g++ -std=c++11 -c parser.cpp
+
+thread_pool.o: thread_pool.cpp
+	g++ -std=c++11 -c thread_pool.cpp
+
+buffer.o : buffer.cpp
+	g++ -std=c++11 -c buffer.cpp
+
 
 clean:
 	rm server *.o *~

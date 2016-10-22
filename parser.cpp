@@ -8,7 +8,7 @@
 
 parser_error XMLParser::init()
 {
-	std::cout << "XML init" << std::endl;
+	std::cout << "XMLParser: init" << std::endl;
 
 	in.open (file_name, std::ifstream::in);
 	EXITIFTRUE(in.fail(), "open \"%s\" file failed", file_name.c_str());
@@ -56,7 +56,7 @@ parser_error XMLParser::process(int &low, int &high)
 
 void XMLParser::deinit()
 {
-	std::cout << "XML deinit" << std::endl;
+	std::cout << "XMLParser: deinit" << std::endl;
 
 	if (in.is_open())
 		in.close();

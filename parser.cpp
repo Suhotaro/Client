@@ -26,21 +26,22 @@ parser_error XMLParser::process(int &low, int &high)
 		std::getline(in, line);
 		std::istringstream iss(line.c_str());
 
-		/* read tag name */
+		/* read tag names */
 		iss >> trash;
-		/* check if a line starts with <low> tag */
+		/* check if a line starts with <low> tag word*/
 		if (!trash.compare(0, 5, "<low>"))
 		{
 			/* read <low> tag value  */
 			iss >> value;
 			low = atoi(value.c_str());
 
+			/* read next line which must be <high> tag */
 			std::getline(in, line);
 			iss.str(line.c_str());
 
-			/* skipp <high> tag */
+			/* skipp <high> tag word*/
 			iss >> trash;
-			/* read <high> tag value  */
+			/* read <high> tag value */
 			iss >> value;
 			high = atoi(value.c_str());
 

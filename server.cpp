@@ -14,11 +14,13 @@ Server::Server(Parser *concret_parser, int num_thread) :
 	pool = new ThreadPool(num_thread);
 	EXITIFTRUE(pool == NULL, "allocate pool fail");
 
+	/* TODO: here must be demonization of server */
+	
 	printf("Server info:\n"
 			"  num calculation threads: %d\n"
 			"  file to be processed: %s\n",
 			num_thread,
-			parser->get_file_name().c_str());
+			parser->get_file_name().c_str());		
 }
 
 Server::~Server()

@@ -18,6 +18,7 @@ public:
 	
 	void set_used();
 	void set_unsed();
+	bool is_used();
 
 	void add_back(int val);
 	int get_front();

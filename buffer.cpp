@@ -16,6 +16,12 @@ void Buffer::set_unsed()
 	used = false;
 }
 
+bool Buffer::is_used()
+{
+	std::lock_guard<std::mutex> guard(mtx);
+	return used;
+}
+
 void Buffer::add_back(int val)
 {
 	std::lock_guard<std::mutex> guard(mtx);

@@ -136,25 +136,34 @@ void ThreadPool::show()
 }
 
 void ThreadPool::pull()
-{
+{	
 	/* TODO: not sure it is good */
 	while (puller_run)
 	{
 		for (int i = 0; i < num_threads; i++)
 		{
-			std::vector<int> v;
+			std::vector<int> data;
 
 			/* Pull calculated prime numbers from a buffer */
 			while (!buffers[i].is_empty())
-				v.push_back(buffers[i].get_front());
+				data.push_back(buffers[i].get_front());
 
 			/* send data via fake tcp */
-			if (!v.empty())
+			if (!data.empty())
 			{
-				for (int j = 0; j < v.size(); j++)
-					printf(" %d", v[j]);
+				/* TODO: have to try it with non blocking case maden
+				 * on counter++ counter-- */
+				std::thread sender(&ThreadPool::send, this, data);
+				sender.join();
 			}
 		}
 	}
 }
+
+void ThreadPool::send(std::vector<int> data)
+{
+	for (int i = 0; i < data.size(); i++)
+		printf("%d ", data[i]);
+}
+
 

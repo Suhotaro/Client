@@ -49,12 +49,15 @@ void Server::start()
 	{
 		printf("Server: I am working: low:%d high:%d\n", low, high);
 		
-		pool->start_job(low, high);					
+		pool->start_job(low, high);			
 	}
 
 	parser->deinit();
 
-	std::this_thread::sleep_for (std::chrono::seconds(10));
+	/* XXX: remove it */
+	std::this_thread::sleep_for (std::chrono::seconds(5));
+	
+	pool->show();
 	
 	std::cout << "Server: I finished working" << std::endl;
 }

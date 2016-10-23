@@ -38,19 +38,18 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
 {	
 	std::vector<int> v;
 
-	/*
-	 * TODO: check low and high values
-	 */
+	/* TODO: check low and high values */
 	for(int i = 0; i < high; i++)
 		v.push_back(1);
 
 	v[0] = 0;
+	v[1] = 0;
 
 	/* Eratosthenes's algorithm with a minor optimization which gives us:
 	 * time : loglogn
 	 * memory: n
 	 * 
-	 * TODO: decrease memory consumption to n/2 
+	 * TODO: decrease memory consumption to n/2
 	 */
 	for(int i = 2; i < v.size(); i++)
 		if (1 == v[i])
@@ -67,6 +66,7 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
 	buffers[buffer_idx].set_unused();
 	all_buffers_captured.notify_one();
 }
+
 
 /* public functions */
 void ThreadPool::start_job(int low, int high)
@@ -98,4 +98,18 @@ void ThreadPool::start_job(int low, int high)
 	 * the job is finished */
 	/* XXX: not sure if it is nice solution */
 	jobs.back().detach();
+}
+
+void ThreadPool::show()
+{
+	for (int i = 0; i < num_threads; i++)
+	{
+		printf("buffer:%d\n", i+1);
+		while(!buffers[i].empty())
+			printf(" %d", buffers[i].get_front());
+		printf("\n\n");
+	}
+		
+		
+			
 }

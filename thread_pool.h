@@ -13,6 +13,7 @@ private:
 	Buffer *buffers;
 	int num_threads = 0;
 	std::vector<std::thread> jobs;
+	std::thread puller;
 	int time = 10;
 
 	std::mutex mtx;
@@ -24,11 +25,15 @@ private:
 	 * result in buffers defined by buffer_idx */
 	void calculate_prime_numbers(int buffer_idx, int low, int high);
 	
+	/* puller procedure */
+	void pull();
+	
 public:
 	ThreadPool(int num_threads);
 	~ThreadPool();
 	
 	void start_job(int low, int high);
+	void show();
 };
 
 #endif //__THREAD_POOL_H__

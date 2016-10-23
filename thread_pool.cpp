@@ -6,6 +6,7 @@
 #include "thread_pool.h"
 #include "buffer.h"
 #include "util.h"
+#include "fake_tcp.h"
 
 ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
 {
@@ -22,7 +23,7 @@ ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
 
 ThreadPool::~ThreadPool()
 {
-	delete[] buffers;	
+	delete[] buffers;
 	delete puller;
 }
 
@@ -153,17 +154,18 @@ void ThreadPool::pull()
 			{
 				/* TODO: have to try it with non blocking case maden
 				 * on counter++ counter-- */
-				std::thread sender(&ThreadPool::send, this, data);
+				std::thread sender(&ThreadPool::send, this, std::ref(data));
 				sender.join();
 			}
 		}
 	}
 }
 
-void ThreadPool::send(std::vector<int> data)
+void ThreadPool::send(std::vector<int> &data)
 {
-	for (int i = 0; i < data.size(); i++)
-		printf("%d ", data[i]);
+	FakeTCP tcp;
+	tcp.init("127.0.0.1:80");
+	tcp.send(data);
 }
 
 

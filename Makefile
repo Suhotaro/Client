@@ -1,7 +1,7 @@
 all: client
 
-client: main.o server.o parser.o thread_pool.o buffer.o
-	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o -o client -pthread
+client: main.o server.o parser.o thread_pool.o buffer.o fake_tcp.o
+	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o fake_tcp.o -o client -pthread
 	rm *.o
 
 main.o: main.cpp
@@ -18,6 +18,9 @@ thread_pool.o: thread_pool.cpp
 
 buffer.o : buffer.cpp
 	g++ -std=c++11 -c buffer.cpp
+
+fake_tcp.o: fake_tcp.cpp
+	g++ -std=c++11 -c fake_tcp.cpp
 
 
 clean:

@@ -30,7 +30,7 @@ private:
 	void pull();
 	
 	/* sender procedure */
-	void send(std::vector<int> data);
+	void send(std::vector<int> &data);
 
 public:
 	ThreadPool(int num_threads);

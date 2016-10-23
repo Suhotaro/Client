@@ -27,7 +27,7 @@ Server::Server(Parser *concret_parser, int num_thread) :
 			"  num calculation threads: %d\n"
 			"  file to be processed: %s\n",
 			num_thread,
-			parser->get_file_name().c_str());		
+			parser->get_file_name().c_str());
 }
 
 Server::~Server()
@@ -54,5 +54,7 @@ void Server::start()
 
 	parser->deinit();
 
+	std::this_thread::sleep_for (std::chrono::seconds(10));
+	
 	std::cout << "Server: I finished working" << std::endl;
 }

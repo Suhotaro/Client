@@ -13,6 +13,7 @@ private:
 	Buffer *buffers;
 	int num_threads = 0;
 	std::vector<std::thread> jobs;
+	int time = 10;
 
 	std::mutex mtx;
 	std::condition_variable all_buffers_captured;

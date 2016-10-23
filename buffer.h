@@ -9,11 +9,11 @@ class Buffer
 {
 private:
 	std::deque<int> queue;
-	bool used;
+	bool used = false;
 	std::mutex mtx;
 	
 public:
-	Buffer() {}
+	Buffer(): used(false) {}
 	~Buffer() {}
 	
 	void set_used();

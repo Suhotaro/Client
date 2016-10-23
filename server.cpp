@@ -11,8 +11,15 @@ Server::Server() {}
 Server::Server(Parser *concret_parser, int num_thread) :
 		parser(concret_parser)
 {
+	parser_error perr = PARSER_ERROR_NONE;
+	
+	std::cout << "Server: I am being initialized" << std::endl;
+	
+	perr = parser->init();
+	EXITIFTRUE(perr != PARSER_ERROR_NONE, "init pareser failed");
+	
 	pool = new ThreadPool(num_thread);
-	EXITIFTRUE(pool == NULL, "allocate pool fail");
+	EXITIFTRUE(pool == NULL, "allocate pool fail");	
 
 	/* TODO: here must be demonization of server */
 	
@@ -37,10 +44,7 @@ void Server::start()
 	int low, high;
 	
 	std::cout << "Server: I have started working" << std::endl;
-	
-	perr = parser->init();
-	EXITIFTRUE(perr != PARSER_ERROR_NONE, "init pareser failed");
-	
+		
 	while ((perr = parser->process(low, high)) == PARSER_ERROR_NONE)
 	{
 		printf("Server: I am working: low:%d high:%d\n", low, high);

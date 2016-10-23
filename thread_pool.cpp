@@ -126,8 +126,18 @@ void ThreadPool::pull()
 	{
 		for (int i = 0; i < num_threads; i++)
 		{
+			std::vector<int> v;
+
+			/* Pull calculated prime numbers from a buffer */
 			while (!buffers[i].is_empty())
-				printf("PULL: %d\n", buffers[i].get_front());
+				v.push_back(buffers[i].get_front());
+
+			/*  */
+			if (!v.empty())
+			{
+				for (int j = 0; j < v.size(); j++)
+					printf(" %d", v[j]);
+			}
 		}
 	}
 }

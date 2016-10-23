@@ -1,7 +1,7 @@
-all: server
+all: client
 
-server: main.o server.o parser.o thread_pool.o buffer.o
-	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o -o server -pthread
+client: main.o server.o parser.o thread_pool.o buffer.o
+	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o -o client -pthread
 	rm *.o
 
 main.o: main.cpp
@@ -21,4 +21,4 @@ buffer.o : buffer.cpp
 
 
 clean:
-	rm server *.o *~
+	rm client *.o *~

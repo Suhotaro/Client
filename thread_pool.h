@@ -12,22 +12,23 @@ class ThreadPool
 private:
 	Buffer *buffers;
 	int num_threads = 0;
-	std::vector<std::thread> jobs;
-	std::thread puller;
-	int time = 10;
+	std::vector<std::thread> jobs;	
 
 	std::mutex mtx;
 	std::condition_variable all_buffers_captured;
-	
+
+	std::thread *puller;
+	bool puller_run;
+
 	bool are_there_free_buffers();
-	
+
 	/* calculates prime numbers for a range defined by low..high and stores
 	 * result in buffers defined by buffer_idx */
 	void calculate_prime_numbers(int buffer_idx, int low, int high);
-	
+
 	/* puller procedure */
 	void pull();
-	
+
 public:
 	ThreadPool(int num_threads);
 	~ThreadPool();

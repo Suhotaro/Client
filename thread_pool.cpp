@@ -11,13 +11,22 @@ ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
 {
 	buffers = new Buffer[num_threads];
 	EXITIFTRUE(buffers == NULL, "allocate buffers fail");
+
+	puller_run = true;
+
+	puller = new std::thread(std::thread(&ThreadPool::pull, this));
+	EXITIFTRUE(puller == NULL, "allocate puller thread fail");
+
+	puller->detach();
 }
 
 ThreadPool::~ThreadPool()
 {
-	delete[] buffers;
+	puller_run = false;
+	
+	delete[] buffers;	
+	delete puller;
 }
-
 
 /* private functions */
 bool ThreadPool::are_there_free_buffers()
@@ -46,8 +55,8 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
 	v[1] = 0;
 
 	/* Eratosthenes's algorithm with a minor optimization which gives us:
-	 * time : loglogn
-	 * memory: n
+	 * time : O(log(log(n)))
+	 * memory: O(n)
 	 * 
 	 * TODO: decrease memory consumption to n/2
 	 */
@@ -60,13 +69,12 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
     for(int i = low; i < high; i++)
         if (1 == v[i])
         	buffers[buffer_idx].add_back(i);
-	
+
 	std::cout << "JOB: idx:" << buffer_idx <<  std::endl;
-	
+
 	buffers[buffer_idx].set_unused();
 	all_buffers_captured.notify_one();
 }
-
 
 /* public functions */
 void ThreadPool::start_job(int low, int high)
@@ -105,11 +113,22 @@ void ThreadPool::show()
 	for (int i = 0; i < num_threads; i++)
 	{
 		printf("buffer:%d\n", i+1);
-		while(!buffers[i].empty())
+		while(!buffers[i].is_empty())
 			printf(" %d", buffers[i].get_front());
 		printf("\n\n");
-	}
-		
-		
-			
+	}			
 }
+
+void ThreadPool::pull()
+{
+	/* TODO: not sure it is good */
+	while (puller_run)
+	{
+		for (int i = 0; i < num_threads; i++)
+		{
+			while (!buffers[i].is_empty())
+				printf("PULL: %d\n", buffers[i].get_front());
+		}
+	}
+}
+

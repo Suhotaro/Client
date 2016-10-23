@@ -39,7 +39,7 @@ int Buffer::get_front()
 	return val;
 }
 
-bool Buffer::empty()
+bool Buffer::is_empty()
 {
 	std::lock_guard<std::mutex> guard(mtx);	
 	return queue.empty();

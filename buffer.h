@@ -22,7 +22,7 @@ public:
 
 	void add_back(int val);
 	int get_front();
-	bool empty();
+	bool is_empty();
 };
 
 #endif //__BUFFER_H__

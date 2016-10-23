@@ -17,7 +17,7 @@ public:
 	~Buffer() {}
 	
 	void set_used();
-	void set_unsed();
+	void set_unused();
 	bool is_used();
 
 	void add_back(int val);

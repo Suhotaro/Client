@@ -10,7 +10,7 @@ void Buffer::set_used()
 	used = true;
 }
 
-void Buffer::set_unsed()
+void Buffer::set_unused()
 {
 	std::lock_guard<std::mutex> guard(mtx);
 	used = false;

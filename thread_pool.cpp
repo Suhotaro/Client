@@ -22,8 +22,6 @@ ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
 
 ThreadPool::~ThreadPool()
 {
-	puller_run = false;
-	
 	delete[] buffers;	
 	delete puller;
 }
@@ -108,6 +106,24 @@ void ThreadPool::start_job(int low, int high)
 	jobs.back().detach();
 }
 
+void ThreadPool::finish_job()
+{
+	int num_used = 0;
+	
+	while(1)
+	{		
+		num_used = 0;
+		
+		for (int i = 0; i < num_threads; i++)
+			num_used += buffers[i].is_used();
+	
+		if (0 == num_used)
+			break;
+	}
+
+	puller_run = false;
+}
+
 void ThreadPool::show()
 {
 	for (int i = 0; i < num_threads; i++)
@@ -132,7 +148,7 @@ void ThreadPool::pull()
 			while (!buffers[i].is_empty())
 				v.push_back(buffers[i].get_front());
 
-			/*  */
+			/* send data via fake tcp */
 			if (!v.empty())
 			{
 				for (int j = 0; j < v.size(); j++)

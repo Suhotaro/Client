@@ -10,7 +10,7 @@ std::string FakeTCP::get_new_file_name()
 	static int num = 0;
 	++num;
 
-	std::string file_name("output");
+	std::string file_name("outputs/output");
 	std::string suffix(".xml");
 
 	file_name += std::to_string(num) + suffix;

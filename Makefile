@@ -1,14 +1,14 @@
 all: client
 
-client: main.o server.o parser.o thread_pool.o buffer.o fake_tcp.o
-	g++ -std=c++11 main.o server.o parser.o thread_pool.o buffer.o fake_tcp.o -o client -pthread
+client: main.o client.o parser.o thread_pool.o buffer.o fake_tcp.o
+	g++ -std=c++11 main.o client.o parser.o thread_pool.o buffer.o fake_tcp.o -o client -pthread
 	rm *.o
 
 main.o: main.cpp
 	g++ -std=c++11 -c main.cpp
 
-server.o: server.cpp
-	g++ -std=c++11 -c server.cpp
+client.o: client.cpp
+	g++ -std=c++11 -c client.cpp
 
 parser.o: parser.cpp
 	g++ -std=c++11 -c parser.cpp

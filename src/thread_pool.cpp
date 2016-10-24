@@ -126,7 +126,7 @@ void ThreadPool::wait_finishing_job()
 		 * one second, if still there are non empty buffers - wait two seconds
 		 * and so on */
 		std::this_thread::sleep_for (std::chrono::seconds(wait));
-		wait *= 2;
+		wait <<= 1;
 	}
 
 	puller_run = false;

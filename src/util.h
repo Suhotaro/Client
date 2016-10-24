@@ -20,7 +20,7 @@
 		return val; \
 	}
 
-#define RETURNIFTRUE(cond, val, f, arg...) \
+#define RETURNIFTRUE(cond, f, arg...) \
 	if (cond) { \
 		printf("[%s][%s][%d]: ERROR: " f"\n",__FILE__,  __func__, __LINE__, ##arg); \
 		return; \

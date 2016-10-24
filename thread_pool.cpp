@@ -107,19 +107,26 @@ void ThreadPool::start_job(int low, int high)
 	jobs.back().detach();
 }
 
-void ThreadPool::finish_job()
+void ThreadPool::wait_finishing_job()
 {
 	int num_used = 0;
-	
+	int wait = 1;
+
 	while(1)
-	{		
+	{
 		num_used = 0;
 		
 		for (int i = 0; i < num_threads; i++)
-			num_used += buffers[i].is_used();
+			num_used += buffers[i].is_empty();
 	
-		if (0 == num_used)
+		if (num_threads == num_used)
 			break;
+
+		/* XXX: Logarithmic waiting. If there are non empty buffers - wait for
+		 * one second, if still there are non empty buffers - wait two seconds
+		 * and so on */
+		std::this_thread::sleep_for (std::chrono::seconds(wait));
+		wait *= 2;
 	}
 
 	puller_run = false;
@@ -152,8 +159,6 @@ void ThreadPool::pull()
 			/* send data via fake tcp */
 			if (!data.empty())
 			{
-				/* TODO: have to try it with non blocking case maden
-				 * on counter++ counter-- */
 				std::thread sender(&ThreadPool::send, this, std::ref(data));
 				sender.join();
 			}

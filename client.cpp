@@ -52,13 +52,13 @@ void Server::start()
 		pool->start_job(low, high);
 	}
 
-	pool->finish_job();
+	pool->wait_finishing_job();
 	
 	parser->deinit();
 	
 
 	/* XXX: remove it */
-	std::this_thread::sleep_for (std::chrono::seconds(5));
+	//std::this_thread::sleep_for (std::chrono::seconds(5));
 	
 	//pool->show();
 	

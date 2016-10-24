@@ -37,7 +37,7 @@ public:
 	~ThreadPool();
 	
 	void start_job(int low, int high);
-	void finish_job();
+	void wait_finishing_job();
 	
 	void show();
 };

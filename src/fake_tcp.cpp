@@ -47,7 +47,7 @@ void FakeTCP::init(std::string ip)
 	RETURNIFTRUE(ret == false, "connect to srver failed");
 }
 
-void FakeTCP::send(std::vector<int> data)
+void FakeTCP::send(std::vector<int> &data)
 {
 	printf("FakeTCP: send\n");
 

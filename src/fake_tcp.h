@@ -25,7 +25,7 @@ public:
 	~FakeTCP() {}
 
 	void init(std::string ip);
-	void send(std::vector<int> data);
+	void send(std::vector<int> &data);
 };
 
 #endif //__FAKE_TCP_H__

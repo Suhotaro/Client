@@ -11,8 +11,10 @@ class ThreadPool
 {
 private:
 	Buffer *buffers;
+	enum { NUM_DEFAULT_THREADS = 4,};
+
 	int num_threads = 0;
-	std::vector<std::thread> jobs;	
+	std::vector<std::thread> jobs;
 
 	std::mutex mtx;
 	std::condition_variable all_buffers_captured;

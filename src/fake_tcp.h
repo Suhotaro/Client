@@ -13,7 +13,8 @@ private:
 	std::string file_name;
 	std::ofstream of;
 
-	int max_delay = 4;
+	enum { DEFAULT_DELAY = 4, };
+	int max_delay = DEFAULT_DELAY;
 
 	std::string get_new_file_name();
 	bool create_socket();

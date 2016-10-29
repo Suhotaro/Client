@@ -5,35 +5,29 @@
 #include "parser.h"
 #include "util.h"
 
-Server::Server() {}
-	
-	/* TODO: make default parser */
-Server::Server(Parser *concret_parser, int num_thread) :
-		parser(concret_parser)
-{
+Server::Server(std::string file_name, int num_thread) {
 	parser_error perr = PARSER_ERROR_NONE;
-	
-	std::cout << "Server: I am being initialized" << std::endl;
-	
+
+	if (file_name.empty())
+		return;
+
+	parser = std::unique_ptr<Parser>(new XMLParser(file_name));
+	pool = std::unique_ptr<ThreadPool>(new ThreadPool(num_thread));
+
 	perr = parser->init();
 	EXITIFTRUE(perr != PARSER_ERROR_NONE, "init pareser failed");
-	
-	pool = new ThreadPool(num_thread);
-	EXITIFTRUE(pool == NULL, "allocate pool fail");	
 
-	/* TODO: here must be demonization of server */
-	
-	printf("Server info:\n"
+	printf( "-----------------------------\n"
+			"Server info:\n"
 			"  num calculation threads: %d\n"
-			"  file to be processed: %s\n",
+			"  file to be processed: %s\n"
+			"-----------------------------\n\n",
 			num_thread,
 			parser->get_file_name().c_str());
 }
 
 Server::~Server()
 {
-	delete parser;
-	delete pool;
 }
 
 /* TODO: add substitutions of paresers, etc */

@@ -10,21 +10,15 @@
 
 ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
 {
-	buffers = new Buffer[num_threads];
-	EXITIFTRUE(buffers == NULL, "allocate buffers fail");
+	buffers = std::vector<Buffer>(num_threads);
+	puller = std::unique_ptr<std::thread> (new std::thread(std::thread(&ThreadPool::pull, this)));
 
 	puller_run = true;
-
-	puller = new std::thread(std::thread(&ThreadPool::pull, this));
-	EXITIFTRUE(puller == NULL, "allocate puller thread fail");
-
 	puller->detach();
 }
 
 ThreadPool::~ThreadPool()
 {
-	delete[] buffers;
-	delete puller;
 }
 
 /* private functions */

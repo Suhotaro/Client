@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
     file_name = strdup(argv[1]);
 
-	Server server(new XMLParser(file_name), num_threads);
+	Server server(file_name, num_threads);
 	server.start();
 
 	return 0;

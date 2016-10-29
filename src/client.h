@@ -2,6 +2,7 @@
 #define __SERVER_H__
 
 #include <thread>
+#include <utility>
 
 #include "parser.h"
 #include "thread_pool.h"
@@ -13,13 +14,13 @@
 class Server
 {
 private:
-	/* TODO: remove *paser --> parser */
-	Parser *parser;
-	ThreadPool *pool;
+	std::unique_ptr<Parser> parser;
+	std::unique_ptr<ThreadPool> pool;
 
 public:
 	Server();
-	Server(Parser *concret_parser, int num_thread);
+
+	Server(std::string file_name, int num_thread);
 	~Server();
 
 	void start();

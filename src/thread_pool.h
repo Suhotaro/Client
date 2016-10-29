@@ -10,16 +10,17 @@
 class ThreadPool
 {
 private:
-	Buffer *buffers;
-	enum { NUM_DEFAULT_THREADS = 4,};
 
-	int num_threads = 0;
+	std::vector<Buffer> buffers;
+
+	enum { NUM_DEFAULT_THREADS = 4,};
+	int num_threads = NUM_DEFAULT_THREADS;
 	std::vector<std::thread> jobs;
 
 	std::mutex mtx;
 	std::condition_variable all_buffers_captured;
 
-	std::thread *puller;
+	std::unique_ptr<std::thread> puller;
 	bool puller_run;
 
 	bool are_there_free_buffers();

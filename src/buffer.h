@@ -14,8 +14,17 @@ private:
 	
 public:
 	Buffer(): used(false) {}
+	Buffer(bool use): used(use) {}
 	~Buffer() {}
 	
+	// make it noncopyable
+	Buffer(Buffer const&) = delete;
+	Buffer& operator=(Buffer const&) = delete;
+
+    // make it movable (thanks, gx_)
+	Buffer( Buffer&&) = default;
+	Buffer& operator=(Buffer&&) = default;
+
 	void set_used();
 	void set_unused();
 	bool is_used();

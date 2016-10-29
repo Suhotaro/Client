@@ -58,7 +58,7 @@ void FakeTCP::send(std::vector<int> data)
 
 	of << "<root>\n";
 	of << "  <primes> ";
-	for (int i = 0; i < data.size(); i++)
+	for (size_t i = 0; i < data.size(); i++)
 		of << data[i] << " ";
 	of << "  </primes>\n";
 	of << "</root>";

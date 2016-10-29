@@ -19,7 +19,7 @@ class Parser
 {
 public:
     Parser() {}
-    ~Parser() {}
+    virtual ~Parser() {}
 
     /**
      * @brief Initializes a parser

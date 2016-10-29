@@ -59,9 +59,9 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
 	 * 
 	 * TODO: decrease memory consumption to n/2
 	 */
-	for(int i = 2; i < v.size(); i++)
+	for(size_t i = 2; i < v.size(); i++)
 		if (1 == v[i])
-			for(int j = i*i; j < v.size(); j+=i)
+			for(size_t j = i*i; j < v.size(); j+=i)
 				v[j] = 0;
 	
 	/* Write result to a buffer */
@@ -91,7 +91,7 @@ void ThreadPool::start_job(int low, int high)
 		all_buffers_captured.wait(lock);
 	
 	/* If there are more then "num_threads" threads in the vector remove first one */
-	if (num_threads < jobs.size())
+	if ((unsigned int)num_threads < jobs.size())
 		jobs.erase(jobs.begin());
 		
 	/* Next job will fill free_buffer_idx buffer with prime numbers */

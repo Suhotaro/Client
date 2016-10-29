@@ -53,10 +53,16 @@ void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
 	 * 
 	 * TODO: decrease memory consumption to n/2
 	 */
-	for(size_t i = 2; i < v.size(); i++)
-		if (1 == v[i])
-			for(size_t j = i*i; j < v.size(); j+=i)
-				v[j] = 0;
+	for(size_t current_number = 2; current_number < v.size(); current_number++)
+	{
+		if (1 == v[current_number])
+		{
+			int power_two = current_number*current_number;
+
+			for(size_t not_prime = power_two; not_prime < v.size(); not_prime+=current_number)
+				v[not_prime] = 0;
+		}
+	}
 	
 	/* Write result to a buffer */
     for(int i = low; i < high; i++)

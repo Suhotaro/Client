@@ -17,7 +17,7 @@ private:
 	int num_threads = NUM_DEFAULT_THREADS;
 	std::vector<std::thread> jobs;
 
-	std::mutex mtx;
+	std::mutex start_job_mutex;
 	std::condition_variable all_buffers_captured;
 
 	std::unique_ptr<std::thread> puller;

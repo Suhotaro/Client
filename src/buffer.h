@@ -9,8 +9,10 @@ class Buffer
 {
 private:
 	std::deque<int> queue;
+	std::mutex queue_mutex;
+
 	bool used = false;
-	std::mutex mtx;
+	std::mutex used_mutex;
 	
 public:
 	Buffer(): used(false) {}

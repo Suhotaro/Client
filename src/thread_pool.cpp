@@ -86,7 +86,7 @@ void ThreadPool::start_job(int low, int high)
 	/* If there are free buffers exist start calculation of prime numbers thread
 	 * for given range of numbers if there are no free buffers, wait untill one
 	 * of already runned threads free one of captured buffers buffers */
-	std::unique_lock<std::mutex> lock(mtx);
+	std::unique_lock<std::mutex> lock(start_job_mutex);
 	while((free_buffer_idx = are_there_free_buffers()) < 0)
 		all_buffers_captured.wait(lock);
 	

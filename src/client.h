@@ -9,8 +9,6 @@
 #include "util.h"
 
 /* TODO: add substitutions of paresers, etc */
-/* TODO: better giving file names to servers not to paresers only */
-/* TODO: make default parser */
 class Server
 {
 private:

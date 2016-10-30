@@ -1,33 +1,35 @@
 #ifndef __THREAD_POOL_H__
 #define __THREAD_POOL_H__
 
-#include <condition_variable>
-#include <mutex>
 #include <vector>
+#include <queue>
+#include <thread>
+#include <map>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 
 #include "buffer.h"
+#include "joined_threads.h"
+#include "job.h"
 
 class ThreadPool
 {
 private:
+	std::atomic_bool works_run;
+	std::deque<Job> works_queue;
+	std::mutex works_queue_mutex;
+	std::vector<std::thread> works_threads;
+	JoinedThreads works_threads_joiner;
 
-	std::vector<Buffer> buffers;
-
-	enum { NUM_DEFAULT_THREADS = 4,};
-	int num_threads = NUM_DEFAULT_THREADS;
-	std::vector<std::thread> jobs;
-
-	std::mutex start_job_mutex;
-	std::condition_variable all_buffers_captured;
+	std::map<std::thread::id, Buffer> buffers;
 
 	std::unique_ptr<std::thread> puller;
+	JoinedThread puller_joiner;
 	bool puller_run;
 
-	bool are_there_free_buffers();
-
-	/* calculates prime numbers for a range defined by low..high and stores
-	 * result in buffers defined by buffer_idx */
-	void calculate_prime_numbers(int buffer_idx, int low, int high);
+	/* works_threads's procedure */
+	void worker_thread();
 
 	/* puller procedure */
 	void pull();
@@ -36,11 +38,10 @@ private:
 	void send(std::vector<int> &data);
 
 public:
-	ThreadPool(int num_threads);
+	ThreadPool();
 	~ThreadPool();
 	
 	void start_job(int low, int high);
-	void wait_finishing_job();
 	
 	void show();
 };

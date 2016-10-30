@@ -16,16 +16,14 @@ private:
 	
 public:
 	Buffer(): used(false) {}
-	Buffer(bool use): used(use) {}
 	~Buffer() {}
-	
-	// make it noncopyable
-	Buffer(Buffer const&) = delete;
-	Buffer& operator=(Buffer const&) = delete;
 
-    // make it movable (thanks, gx_)
-	Buffer( Buffer&&) = default;
-	Buffer& operator=(Buffer&&) = default;
+    Buffer(const Buffer& buffer) : used(buffer.used) {}
+    Buffer& operator=(const Buffer& buffer)
+    {
+    	used = buffer.used;
+    	return *this;
+    }
 
 	void set_used();
 	void set_unused();

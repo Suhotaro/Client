@@ -1,6 +1,7 @@
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include <vector>
 
 #include "thread_pool.h"
@@ -8,132 +9,78 @@
 #include "util.h"
 #include "fake_tcp.h"
 
-ThreadPool::ThreadPool(int num_threads) : num_threads(num_threads)
+ThreadPool::ThreadPool() : works_run(true),
+works_threads_joiner(works_threads), puller_joiner(puller)
 {
-	buffers = std::vector<Buffer>(num_threads);
-	puller = std::unique_ptr<std::thread> (new std::thread(std::thread(&ThreadPool::pull, this)));
+	const unsigned int thread_count = std::thread::hardware_concurrency();
 
+	printf("NUM: %d\n", thread_count);
+
+	for (unsigned int i = 0; i < thread_count; i++)
+	{
+		works_threads.push_back(std::thread(&ThreadPool::worker_thread, this));
+		buffers.insert( std::pair<std::thread::id, Buffer>(works_threads[i].get_id(), Buffer()));
+	}
+
+	puller = std::unique_ptr<std::thread> (new std::thread(std::thread(&ThreadPool::pull, this)));
 	puller_run = true;
-	puller->detach();
 }
 
 ThreadPool::~ThreadPool()
 {
-}
-
-/* private functions */
-bool ThreadPool::are_there_free_buffers()
-{
-	bool used = false;
-	
-	for (int i = 0; i < num_threads; i++)
-	{
-		used = buffers[i].is_used();
-		if (used == false)
-			return i;
-	}
-
-	return -1;
-}
-
-void ThreadPool::calculate_prime_numbers(int buffer_idx, int low, int high)
-{	
-	std::vector<int> v;
-
-	/* TODO: check low and high values */
-	for(int i = 0; i < high; i++)
-		v.push_back(1);
-
-	v[0] = 0;
-	v[1] = 0;
-
-	/* Eratosthenes's algorithm with a minor optimization which gives us:
-	 * time : O(log(log(n)))
-	 * memory: O(n)
-	 * 
-	 * TODO: decrease memory consumption to n/2
+	/* XXX: as I understand during deleting an object its all fields destructores
+	 * has to be called backwards to its fields constructores. It means the we
+	 * will join to all work threads and after will join to puller thread. But
+	 * I am not sure for that right now.
 	 */
-	for(size_t current_number = 2; current_number < v.size(); current_number++)
-	{
-		if (1 == v[current_number])
-		{
-			int power_two = current_number*current_number;
+	works_run = false;
+	puller_run = false;
+}
 
-			for(size_t not_prime = power_two; not_prime < v.size(); not_prime+=current_number)
-				v[not_prime] = 0;
+void ThreadPool::worker_thread()
+{
+	printf("POOL: start work thread\n");
+
+	while(works_run)
+	{
+		works_queue_mutex.lock();
+
+		if (!works_queue.empty())
+		{
+			Job job = works_queue.front();
+			works_queue.pop_front();
+
+			works_queue_mutex.unlock();
+
+			printf("POOL: process job\n");
+
+			Buffer buffer = buffers[std::this_thread::get_id()];
+			job(buffer);
+
+			/* paralelize jobs */
+		}
+		else
+		{
+			works_queue_mutex.unlock();
+			std::this_thread::yield();
 		}
 	}
-	
-	/* Write result to a buffer */
-    for(int i = low; i < high; i++)
-        if (1 == v[i])
-        	buffers[buffer_idx].add_back(i);
 
-	std::cout << "JOB: idx:" << buffer_idx <<  std::endl;
-
-	buffers[buffer_idx].set_unused();
-	all_buffers_captured.notify_one();
+	printf("POOL: stop work thread\n");
 }
+
 
 /* public functions */
 void ThreadPool::start_job(int low, int high)
 {
-	int free_buffer_idx = -1;
-	
-	std::cout << "ThreadPool: job started l:"
-			  << low << " h:" << high << std::endl;
-	
-	/* If there are free buffers exist start calculation of prime numbers thread
-	 * for given range of numbers if there are no free buffers, wait untill one
-	 * of already runned threads free one of captured buffers buffers */
-	std::unique_lock<std::mutex> lock(start_job_mutex);
-	while((free_buffer_idx = are_there_free_buffers()) < 0)
-		all_buffers_captured.wait(lock);
-	
-	/* If there are more then "num_threads" threads in the vector remove first one */
-	if ((unsigned int)num_threads < jobs.size())
-		jobs.erase(jobs.begin());
-		
-	/* Next job will fill free_buffer_idx buffer with prime numbers */
-	buffers[free_buffer_idx].set_used();
-	printf("free_buffer_idx:%d\n", free_buffer_idx);
-	
-	/* Start the job */
-	jobs.push_back(std::thread(&ThreadPool::calculate_prime_numbers, this, free_buffer_idx, low, high));
-	
-	/* Detach job from main thread since we are not going to locked untill
-	 * the job is finished */
-	/* XXX: not sure if it is nice solution */
-	jobs.back().detach();
-}
+	std::lock_guard<std::mutex> guard(works_queue_mutex);
 
-void ThreadPool::wait_finishing_job()
-{
-	int num_used = 0;
-	int wait = 1;
-
-	while(1)
-	{
-		num_used = 0;
-		
-		for (int i = 0; i < num_threads; i++)
-			num_used += buffers[i].is_empty();
-	
-		if (num_threads == num_used)
-			break;
-
-		/* XXX: Logarithmic waiting. If there are non empty buffers - wait for
-		 * one second, if still there are non empty buffers - wait two seconds
-		 * and so on */
-		std::this_thread::sleep_for (std::chrono::seconds(wait));
-		wait <<= 1;
-	}
-
-	puller_run = false;
+	works_queue.push_back(Job(low, high));
 }
 
 void ThreadPool::show()
 {
+#if 0
 	for (int i = 0; i < num_threads; i++)
 	{
 		printf("buffer:%d\n", i+1);
@@ -141,10 +88,21 @@ void ThreadPool::show()
 			printf(" %d", buffers[i].get_front());
 		printf("\n\n");
 	}			
+#endif
 }
 
 void ThreadPool::pull()
 {	
+	printf("POOL: start pull ******>>\n");
+
+	while (puller_run)
+	{
+		;
+	}
+
+	printf("POOL: stop pull <<******\n");
+
+#if 0
 	/* TODO: not sure it is good */
 	while (puller_run)
 	{
@@ -164,6 +122,7 @@ void ThreadPool::pull()
 			}
 		}
 	}
+#endif
 }
 
 void ThreadPool::send(std::vector<int> &data)

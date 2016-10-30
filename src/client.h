@@ -1,5 +1,5 @@
-#ifndef __SERVER_H__
-#define __SERVER_H__
+#ifndef __Client_H__
+#define __Client_H__
 
 #include <thread>
 #include <utility>
@@ -9,19 +9,19 @@
 #include "util.h"
 
 /* TODO: add substitutions of paresers, etc */
-class Server
+class Client
 {
 private:
 	std::unique_ptr<Parser> parser;
 	std::unique_ptr<ThreadPool> pool;
 
 public:
-	Server();
+	Client();
 
-	Server(std::string file_name, int num_thread);
-	~Server();
+	Client(std::string file_name);
+	~Client();
 
 	void start();
 };
 
-#endif //__SERVER_H__
+#endif //__Client_H__

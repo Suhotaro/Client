@@ -53,6 +53,12 @@ void FakeTCP::send(std::vector<int> &data)
 
 	/* write(fd, ...) */
 
+/*
+	std::cout << "DATA:";
+	for (size_t i = 0; i < data.size(); i++)
+		std::cout << data[i] << " ";
+*/
+
 	of.open(file_name);
 	EXITIFTRUE(of.fail(), "open output \"%s\" file failed", file_name.c_str());
 

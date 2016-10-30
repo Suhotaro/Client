@@ -54,7 +54,7 @@ void ThreadPool::worker_thread()
 
 			printf("POOL: process job\n");
 
-			Buffer buffer = buffers[std::this_thread::get_id()];
+			Buffer &buffer = buffers[std::this_thread::get_id()];
 			job(buffer);
 
 			/* paralelize jobs */
@@ -93,36 +93,50 @@ void ThreadPool::show()
 
 void ThreadPool::pull()
 {	
-	printf("POOL: start pull ******>>\n");
+	printf("POOL: start pull +++++++>>\n");
 
 	while (puller_run)
 	{
-		;
-	}
-
-	printf("POOL: stop pull <<******\n");
-
-#if 0
-	/* TODO: not sure it is good */
-	while (puller_run)
-	{
-		for (int i = 0; i < num_threads; i++)
+		for(auto iterator = buffers.begin(); iterator != buffers.end(); iterator++)
 		{
 			std::vector<int> data;
+			Buffer &buffer = iterator->second;
 
 			/* Pull calculated prime numbers from a buffer */
-			while (!buffers[i].is_empty())
-				data.push_back(buffers[i].get_front());
+			while (!buffer.is_empty())
+				data.push_back(buffer.get_front());
 
 			/* send data via fake tcp */
 			if (!data.empty())
 			{
+				printf("POOL: send data ------>>\n");
+
 				std::thread sender(&ThreadPool::send, this, std::ref(data));
 				sender.join();
 			}
 		}
 	}
-#endif
+
+	for(auto iterator = buffers.begin(); iterator != buffers.end(); iterator++)
+	{
+		std::vector<int> data;
+		Buffer &buffer = iterator->second;
+
+		/* Pull calculated prime numbers from a buffer */
+		while (!buffer.is_empty())
+			data.push_back(buffer.get_front());
+
+		/* send data via fake tcp */
+		if (!data.empty())
+		{
+			printf("POOL: send data ------>>\n");
+
+			std::thread sender(&ThreadPool::send, this, std::ref(data));
+			sender.join();
+		}
+	}
+
+	printf("POOL: stop pull <<+++++++\n");
 }
 
 void ThreadPool::send(std::vector<int> &data)

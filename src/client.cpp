@@ -40,11 +40,13 @@ void Client::start()
 	while ((perr = parser->process(low, high)) == PARSER_ERROR_NONE)
 	{
 		printf("Client: I am working: low:%d high:%d\n", low, high);
-		
+
 		pool->start_job(low, high);
 	}
 	
 	parser->deinit();
 	
+	//std::this_thread::sleep_for (std::chrono::seconds(2));
+
 	std::cout << "Client: I finished working" << std::endl;
 }

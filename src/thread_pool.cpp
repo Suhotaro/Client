@@ -117,25 +117,6 @@ void ThreadPool::pull()
 		}
 	}
 
-	for(auto iterator = buffers.begin(); iterator != buffers.end(); iterator++)
-	{
-		std::vector<int> data;
-		Buffer &buffer = iterator->second;
-
-		/* Pull calculated prime numbers from a buffer */
-		while (!buffer.is_empty())
-			data.push_back(buffer.get_front());
-
-		/* send data via fake tcp */
-		if (!data.empty())
-		{
-			printf("POOL: send data ------>>\n");
-
-			std::thread sender(&ThreadPool::send, this, std::ref(data));
-			sender.join();
-		}
-	}
-
 	printf("POOL: stop pull <<+++++++\n");
 }
 

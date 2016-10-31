@@ -50,10 +50,10 @@ void ThreadPool::worker_thread()
 
 	while(works_run)
 	{
+		works_queue_mutex.lock();
+
 		if (!works_queue.empty())
 		{
-			works_queue_mutex.lock();
-
 			Job job = works_queue.front();
 			works_queue.pop_front();
 
@@ -68,14 +68,23 @@ void ThreadPool::worker_thread()
 		}
 		else
 		{
+			works_queue_mutex.unlock();
 			std::this_thread::yield();
 		}
 	}
 
 	/* If there are yet not finished jobs remaining process them all */
-	while(!works_queue.empty())
+	while(true)
 	{
 		works_queue_mutex.lock();
+
+		if (works_queue.empty())
+		{
+			works_queue_mutex.unlock();
+			printf("POOL: stop work thread\n");
+
+			return;
+		}
 
 		Job job = works_queue.front();
 		works_queue.pop_front();
@@ -87,8 +96,6 @@ void ThreadPool::worker_thread()
 		Buffer &buffer = buffers[std::this_thread::get_id()];
 		job(buffer);
 	}
-
-	printf("POOL: stop work thread\n");
 }
 
 /* public functions */

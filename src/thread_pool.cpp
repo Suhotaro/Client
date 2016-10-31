@@ -14,7 +14,7 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 {
 	const unsigned int thread_count = std::thread::hardware_concurrency();
 
-	printf("NUM: %d\n", thread_count);
+	printf("POOL: num of workers threads %d\n", thread_count);
 
 	for (unsigned int i = 0; i < thread_count; i++)
 	{
@@ -28,13 +28,20 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 
 ThreadPool::~ThreadPool()
 {
-	/* XXX: as I understand during deleting an object its all fields-objects
-	 * call its destructores backwards to its constructores. It means thet we
-	 * will join to all work threads and after will join to puller thread. But
-	 * I am not sure for that right now.
-	 */
 	works_run = false;
+
+	/* Wait until all threads are stoped */
+	for (unsigned int i = 0; i < works_threads.size(); i++)
+		if (works_threads[i].joinable())
+			works_threads[i].join();
+
+	/* After that point all worker threads are already stoped, thus
+	 * send data that left in our buffers */
+
 	puller_run = false;
+
+	if (puller->joinable())
+		puller->join();
 }
 
 void ThreadPool::worker_thread()
@@ -43,10 +50,10 @@ void ThreadPool::worker_thread()
 
 	while(works_run)
 	{
-		works_queue_mutex.lock();
-
 		if (!works_queue.empty())
 		{
+			works_queue_mutex.lock();
+
 			Job job = works_queue.front();
 			works_queue.pop_front();
 
@@ -61,9 +68,24 @@ void ThreadPool::worker_thread()
 		}
 		else
 		{
-			works_queue_mutex.unlock();
 			std::this_thread::yield();
 		}
+	}
+
+	/* If there are yet not finished jobs remaining process them all */
+	while(!works_queue.empty())
+	{
+		works_queue_mutex.lock();
+
+		Job job = works_queue.front();
+		works_queue.pop_front();
+
+		works_queue_mutex.unlock();
+
+		printf("POOL: process job\n");
+
+		Buffer &buffer = buffers[std::this_thread::get_id()];
+		job(buffer);
 	}
 
 	printf("POOL: stop work thread\n");
@@ -119,13 +141,6 @@ void ThreadPool::pull()
 	while (puller_run)
 		collect_data_and_send();
 
-	/* Wait until all threads are stoped */
-	for (unsigned int i = 0; i < works_threads.size(); i++)
-		if (works_threads[i].joinable())
-			works_threads[i].join();
-
-	/* After that point all worker threads are already stoped, thus
-	 * send data that left in our buffers */
 	collect_data_and_send();
 
 	printf("POOL: stop pull <<+++++++\n");

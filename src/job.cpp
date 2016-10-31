@@ -51,5 +51,7 @@ void Job::operator() (Buffer &buffer)
 	printf("JOB: do job:%d %d\n", low, high);
 	
 	calculate_pime_numbers(buffer, low, high);
+	
+	printf("JOB: done job\n");
 }
 

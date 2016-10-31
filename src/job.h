@@ -23,10 +23,9 @@ public:
     {
 		low = job.low;
 		high = job.high;
-		
+
     	return *this;
     }
-	
 
 	/* calculcates prime numbers from "low" to "high" and stores result in buffer */
 	void operator() (Buffer &buffer);

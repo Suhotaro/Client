@@ -28,8 +28,8 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 
 ThreadPool::~ThreadPool()
 {
-	/* XXX: as I understand during deleting an object its all fields destructores
-	 * has to be called backwards to its fields constructores. It means the we
+	/* XXX: as I understand during deleting an object its all fields-objects
+	 * call its destructores backwards to its constructores. It means thet we
 	 * will join to all work threads and after will join to puller thread. But
 	 * I am not sure for that right now.
 	 */
@@ -69,7 +69,6 @@ void ThreadPool::worker_thread()
 	printf("POOL: stop work thread\n");
 }
 
-
 /* public functions */
 void ThreadPool::start_job(int low, int high)
 {
@@ -91,31 +90,43 @@ void ThreadPool::show()
 #endif
 }
 
+void ThreadPool::collect_data_and_send()
+{
+	for(auto iterator = buffers.begin(); iterator != buffers.end(); iterator++)
+	{
+		std::vector<int> data;
+		Buffer &buffer = iterator->second;
+
+		/* Pull calculated prime numbers from a buffer */
+		while (!buffer.is_empty())
+			data.push_back(buffer.get_front());
+
+		/* send data via fake tcp */
+		if (!data.empty())
+		{
+			printf("POOL: send data ------>>\n");
+
+			std::thread sender(&ThreadPool::send, this, std::ref(data));
+			sender.join();
+		}
+	}
+}
+
 void ThreadPool::pull()
-{	
+{
 	printf("POOL: start pull +++++++>>\n");
 
 	while (puller_run)
-	{
-		for(auto iterator = buffers.begin(); iterator != buffers.end(); iterator++)
-		{
-			std::vector<int> data;
-			Buffer &buffer = iterator->second;
+		collect_data_and_send();
 
-			/* Pull calculated prime numbers from a buffer */
-			while (!buffer.is_empty())
-				data.push_back(buffer.get_front());
+	/* Wait until all threads are stoped */
+	for (unsigned int i = 0; i < works_threads.size(); i++)
+		if (works_threads[i].joinable())
+			works_threads[i].join();
 
-			/* send data via fake tcp */
-			if (!data.empty())
-			{
-				printf("POOL: send data ------>>\n");
-
-				std::thread sender(&ThreadPool::send, this, std::ref(data));
-				sender.join();
-			}
-		}
-	}
+	/* After that point all worker threads are already stoped, thus
+	 * send data that left in our buffers */
+	collect_data_and_send();
 
 	printf("POOL: stop pull <<+++++++\n");
 }

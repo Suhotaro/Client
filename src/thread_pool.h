@@ -37,6 +37,8 @@ private:
 	/* sender procedure */
 	void send(std::vector<int> &data);
 
+	void collect_data_and_send();
+
 public:
 	ThreadPool();
 	~ThreadPool();

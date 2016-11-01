@@ -22,6 +22,9 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 		buffers.insert( std::pair<std::thread::id, Buffer>(works_threads[i].get_id(), Buffer()));
 	}
 
+	/* TODO: it has to be effciently calculated */
+	//threads_per_cpu = 20;
+
 	puller = std::unique_ptr<std::thread> (new std::thread(std::thread(&ThreadPool::pull, this)));
 	puller_run = true;
 }
@@ -34,9 +37,6 @@ ThreadPool::~ThreadPool()
 	for (unsigned int i = 0; i < works_threads.size(); i++)
 		if (works_threads[i].joinable())
 			works_threads[i].join();
-
-	/* After that point all worker threads are already stoped, thus
-	 * send data that left in our buffers */
 
 	puller_run = false;
 
@@ -52,6 +52,7 @@ void ThreadPool::worker_thread()
 	{
 		works_queue_mutex.lock();
 
+		/* TODO: here must be condition variable */
 		if (!works_queue.empty())
 		{
 			Job job = works_queue.front();
@@ -61,10 +62,7 @@ void ThreadPool::worker_thread()
 
 			printf("POOL: process job\n");
 
-			Buffer &buffer = buffers[std::this_thread::get_id()];
-			job(buffer);
-
-			/* paralelize jobs */
+			paralelize_job(job);
 		}
 		else
 		{
@@ -96,6 +94,63 @@ void ThreadPool::worker_thread()
 		Buffer &buffer = buffers[std::this_thread::get_id()];
 		job(buffer);
 	}
+}
+
+void ThreadPool::paralelize_job(Job &job)
+{
+	Buffer &buffer = buffers[std::this_thread::get_id()];
+	int low = job.get_low();
+	int high = job.get_high();
+	int range = high - low;
+
+	if (range <= max_range)
+	{
+		printf("POOL: no paralelize case @@@@@@@@@");
+
+		job(buffer);
+		return;
+	}
+
+	printf("POOL: paralelize case #########\n");
+
+	int rest = range % max_range;
+	int chanks =  range / max_range;
+	int cut = high - ((chanks - threads_per_cpu) * max_range) - rest;
+
+	std::vector<std::thread> sub_workers_threads;
+
+	if (chanks > threads_per_cpu)
+	{
+		printf("POOL: split 1111111111\n");
+
+		/* TODO: It might be possible that the job could be skipped on destroing the pool */
+		works_queue_mutex.lock();
+		works_queue.push_back(Job(cut, high - rest));
+		works_queue_mutex.unlock();
+
+		for (int i = low; i < cut; i+=max_range)
+		{
+			if (i+max_range >= cut)
+				sub_workers_threads.push_back(std::thread(Job(i, i+max_range+rest), std::ref(buffer)));
+			else
+				sub_workers_threads.push_back(std::thread(Job(i, i+max_range), std::ref(buffer)));
+		}
+	}
+	else
+	{
+		printf("POOL: split 22222222222");
+
+		for (int i = low; i < high - rest; i+=max_range)
+		{
+			if (i+max_range >= high - rest)
+				sub_workers_threads.push_back(std::thread(Job(i, i+max_range+rest), std::ref(buffer)));
+			else
+				sub_workers_threads.push_back(std::thread(Job(i, i+max_range), std::ref(buffer)));
+		}
+	}
+
+	for (unsigned int i = 0; i < sub_workers_threads.size(); i++)
+		sub_workers_threads[i].join();
 }
 
 /* public functions */
@@ -148,6 +203,9 @@ void ThreadPool::pull()
 	while (puller_run)
 		collect_data_and_send();
 
+	/* After that point all worker threads are already stoped, thus
+	 * send data that left in our buffers
+	 */
 	collect_data_and_send();
 
 	printf("POOL: stop pull <<+++++++\n");

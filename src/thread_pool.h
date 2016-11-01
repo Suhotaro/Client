@@ -16,6 +16,12 @@
 class ThreadPool
 {
 private:
+	enum {THREADS_PER_CPU = 10,
+		  MAX_RANGE = 20,};
+
+	int threads_per_cpu = THREADS_PER_CPU;
+	int max_range = MAX_RANGE;
+
 	std::atomic_bool works_run;
 	std::deque<Job> works_queue;
 	std::mutex works_queue_mutex;
@@ -38,6 +44,7 @@ private:
 	void send(std::vector<int> &data);
 
 	void collect_data_and_send();
+	void paralelize_job(Job &job);
 
 public:
 	ThreadPool();

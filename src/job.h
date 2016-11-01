@@ -26,12 +26,17 @@ public:
 
     	return *this;
     }
+	
+	Job(Job&& job) : low(std::move(job.low)), high(std::move(job.high)) { }
 
 	/* calculcates prime numbers from "low" to "high" and stores result in buffer */
 	void operator() (Buffer &buffer);
 	
 	/* calculcates prime numbers from "from" to "to" and stores result in buffer */
 	void operator() (Buffer &buffer, int from, int to);
+	
+	int get_low() { return low; }
+	int get_high() { return high; }
 };
 
 #endif //__JOB_H__

@@ -43,7 +43,11 @@ void Job::calculate_pime_numbers(Buffer &buffer, int from, int to)
 
 void Job::operator() (Buffer &buffer, int from, int to)
 {
+	printf("JOB: do subjob:%d %d\n", low, high);
+	
 	calculate_pime_numbers(buffer, from, to);
+	
+	printf("JOB: done subjob\n");	
 }
 
 void Job::operator() (Buffer &buffer)

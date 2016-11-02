@@ -46,7 +46,7 @@ void Client::start()
 	
 	parser->deinit();
 	
-	//std::this_thread::sleep_for (std::chrono::seconds(2));
+	std::this_thread::sleep_for (std::chrono::seconds(2));
 
 	std::cout << "Client: I finished working" << std::endl;
 }

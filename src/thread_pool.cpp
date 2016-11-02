@@ -50,25 +50,8 @@ void ThreadPool::worker_thread()
 
 	while(works_run)
 	{
-		works_queue_mutex.lock();
-
-		/* TODO: here must be condition variable */
-		if (!works_queue.empty())
-		{
-			Job job = works_queue.front();
-			works_queue.pop_front();
-
-			works_queue_mutex.unlock();
-
-			printf("POOL: process job\n");
-
-			paralelize_job(job);
-		}
-		else
-		{
-			works_queue_mutex.unlock();
+		if (false == do_jobs())
 			std::this_thread::yield();
-		}
 	}
 
 	/* If there are yet not finished jobs remaining process them all */
@@ -96,19 +79,33 @@ void ThreadPool::worker_thread()
 	}
 }
 
-void ThreadPool::paralelize_job(Job &job)
+bool ThreadPool::do_jobs()
 {
-	Buffer &buffer = buffers[std::this_thread::get_id()];
+	works_queue_mutex.lock();
+
+	if (works_queue.empty())
+	{
+		works_queue_mutex.unlock();
+		return false;
+	}
+
+	Job job = works_queue.front();
+	works_queue.pop_front();
+
 	int low = job.get_low();
 	int high = job.get_high();
 	int range = high - low;
 
+	Buffer &buffer = buffers[std::this_thread::get_id()];
+
 	if (range <= max_range)
 	{
+		works_queue_mutex.unlock();
+
 		printf("POOL: no paralelize case @@@@@@@@@");
 
 		job(buffer);
-		return;
+		return true;
 	}
 
 	printf("POOL: paralelize case #########\n");
@@ -124,9 +121,10 @@ void ThreadPool::paralelize_job(Job &job)
 		printf("POOL: split 1111111111\n");
 
 		/* TODO: It might be possible that the job could be skipped on destroing the pool */
-		works_queue_mutex.lock();
 		works_queue.push_back(Job(cut, high - rest));
 		works_queue_mutex.unlock();
+
+		printf("POOL: split 1111111111 %dx%d\n", cut, high - rest);
 
 		for (int i = low; i < cut; i+=max_range)
 		{
@@ -138,6 +136,8 @@ void ThreadPool::paralelize_job(Job &job)
 	}
 	else
 	{
+		works_queue_mutex.unlock();
+
 		printf("POOL: split 22222222222");
 
 		for (int i = low; i < high - rest; i+=max_range)
@@ -149,8 +149,12 @@ void ThreadPool::paralelize_job(Job &job)
 		}
 	}
 
+	works_queue_mutex.unlock();
+
 	for (unsigned int i = 0; i < sub_workers_threads.size(); i++)
 		sub_workers_threads[i].join();
+
+	return true;
 }
 
 /* public functions */

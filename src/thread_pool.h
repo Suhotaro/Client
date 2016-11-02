@@ -44,7 +44,7 @@ private:
 	void send(std::vector<int> &data);
 
 	void collect_data_and_send();
-	void paralelize_job(Job &job);
+	bool do_jobs();
 
 public:
 	ThreadPool();

@@ -20,6 +20,7 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 	{
 		works_threads.push_back(std::thread(&ThreadPool::worker_thread, this));
 		buffers.insert( std::pair<std::thread::id, Buffer>(works_threads[i].get_id(), Buffer()));
+		statistic.insert( std::pair<std::thread::id, int>(works_threads[i].get_id(), 0));
 	}
 
 	/* TODO: it has to be effciently calculated */
@@ -42,6 +43,8 @@ ThreadPool::~ThreadPool()
 
 	if (puller->joinable())
 		puller->join();
+
+	statistic_show();
 }
 
 void ThreadPool::worker_thread()
@@ -100,6 +103,8 @@ bool ThreadPool::do_jobs()
 
 	if (range <= max_range)
 	{
+		statistic_do(1);
+
 		works_queue_mutex.unlock();
 
 		printf("POOL: no paralelize case @@@@@@@@@");
@@ -124,6 +129,8 @@ bool ThreadPool::do_jobs()
 		works_queue.push_back(Job(cut, high - rest));
 		works_queue_mutex.unlock();
 
+		statistic_do(1);
+
 		printf("POOL: split 1111111111 %dx%d\n", cut, high - rest);
 
 		for (int i = low; i < cut; i+=max_range)
@@ -142,14 +149,14 @@ bool ThreadPool::do_jobs()
 
 		for (int i = low; i < high - rest; i+=max_range)
 		{
+			statistic_do(1);
+
 			if (i+max_range >= high - rest)
 				sub_workers_threads.push_back(std::thread(Job(i, i+max_range+rest), std::ref(buffer)));
 			else
 				sub_workers_threads.push_back(std::thread(Job(i, i+max_range), std::ref(buffer)));
 		}
 	}
-
-	works_queue_mutex.unlock();
 
 	for (unsigned int i = 0; i < sub_workers_threads.size(); i++)
 		sub_workers_threads[i].join();
@@ -222,4 +229,27 @@ void ThreadPool::send(std::vector<int> &data)
 	tcp.send(data);
 }
 
+void ThreadPool::statistic_do(int num)
+{
+	statistic_mutex.lock();
 
+	int tmp = statistic[std::this_thread::get_id()];
+	statistic.erase(std::this_thread::get_id());
+	statistic.insert( std::pair<std::thread::id, int>(std::this_thread::get_id(), tmp+num));
+
+	/* Doing it just to better remember unique_lock feture */
+	statistic_mutex.unlock();
+}
+
+void ThreadPool::statistic_show()
+{
+	printf("-----------------------------\n\n");
+	printf("Statistic:\n");
+	int j = 1;
+	for (auto i = statistic.begin(); i != statistic.end(); i++)
+	{
+		printf("  thread : %d\n", i->second);
+		j++;
+	}
+	printf( "-----------------------------\n\n");
+}

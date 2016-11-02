@@ -34,6 +34,9 @@ private:
 	JoinedThread puller_joiner;
 	bool puller_run;
 
+	std::map<std::thread::id, int> statistic;
+	std::mutex statistic_mutex;
+
 	/* works_threads's procedure */
 	void worker_thread();
 
@@ -46,6 +49,9 @@ private:
 	void collect_data_and_send();
 	bool do_jobs();
 
+	void statistic_do(int num);
+	void statistic_show();
+
 public:
 	ThreadPool();
 	~ThreadPool();
@@ -56,3 +62,4 @@ public:
 };
 
 #endif //__THREAD_POOL_H__
+

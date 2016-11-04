@@ -24,5 +24,12 @@ void FakeTCP::send()
 		tcp_state->step(*this);
 }
 
-void FakeTCP::set_data(std::vector<int> &data_) {data = data_;}
-std::vector<int> & FakeTCP::get_data() {return data;}
+void FakeTCP::set_data(std::vector<int> &data_)
+{
+	data = data_;
+}
+
+std::vector<int> & FakeTCP::get_data()
+{
+	return data;
+}

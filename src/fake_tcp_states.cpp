@@ -79,15 +79,24 @@ void FakeTCPSend::step(FakeTCP &fake_tcp)
 	
 	of.close();
 	
-	/* XXX: if send OK set End status */
-	std::unique_ptr<FakeTCPEnd> end = std::unique_ptr<FakeTCPEnd> (new FakeTCPEnd());
-	fake_tcp.set_state(end);
+	if (true)
+	{
+		std::unique_ptr<FakeTCPEnd> end = std::unique_ptr<FakeTCPEnd> (new FakeTCPEnd());
+		fake_tcp.set_state(end);
+	}
+	else
+	{
+		/* XXX: if send OK set End status */
+		std::unique_ptr<FakeTCPSlowPace> slow = std::unique_ptr<FakeTCPSlowPace> (new FakeTCPSlowPace());
+		fake_tcp.set_state(slow);
+	}
 }
 
 void FakeTCPSlowPace::step(FakeTCP &fake_tcp)
 {
 	printf("TCPState: Slow Pace:%d\n", get_state());
 	
+	/* TODO: finish */
 	/* TODO: I do no clearaly undestend SlowPace */
 }
 

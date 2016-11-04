@@ -115,30 +115,10 @@ public:
 	std::vector<int> &get_data();
 
 	/* TODO: make these functions private */
-
 	std::string get_new_file_name();
 
-	void set_state(std::unique_ptr<FakeTCPState> &tcp_state_)
-	{
-		tcp_state = std::move(tcp_state_);
-	}
-
-	void set_state(std::unique_ptr<FakeTCPSend> &tcp_state_)
-	{
-		tcp_state = std::move(tcp_state_);
-	}
-
-	void set_state(std::unique_ptr<FakeTCPReconnect> &tcp_state_)
-	{
-		tcp_state = std::move(tcp_state_);
-	}
-
-	void set_state(std::unique_ptr<FakeTCPSlowPace> &tcp_state_)
-	{
-		tcp_state = std::move(tcp_state_);
-	}
-
-	void set_state(std::unique_ptr<FakeTCPEnd> &tcp_state_)
+	template <typename T>
+	void set_state(std::unique_ptr<T> &tcp_state_)
 	{
 		tcp_state = std::move(tcp_state_);
 	}

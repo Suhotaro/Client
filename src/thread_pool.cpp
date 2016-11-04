@@ -224,9 +224,9 @@ void ThreadPool::pull()
 
 void ThreadPool::send(std::vector<int> &data)
 {
-	FakeTCP tcp;
-	tcp.init("127.0.0.1:80");
-	tcp.send(data);
+	FakeTCP tcp("127.0.0.1:80");
+	tcp.set_data(data);
+	tcp.send();
 }
 
 void ThreadPool::statistic_do(int num)

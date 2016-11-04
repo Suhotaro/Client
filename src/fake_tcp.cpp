@@ -18,56 +18,11 @@ std::string FakeTCP::get_new_file_name()
 	return file_name;
 }
 
-bool FakeTCP::create_socket()
+void FakeTCP::send()
 {
-	/* fd = socket(...); */
-
-	return true;
+	while(END != tcp_state->get_state())
+		tcp_state->step(*this);
 }
 
-bool FakeTCP::connect()
-{
-	for(int sec = 1; sec <= max_delay; sec <<= 1)
-	{
-		/* connect( fd, ...); */
-		;
-	}
-
-	return true;
-}
-
-void FakeTCP::init(std::string ip)
-{
-	bool ret;
-
-	ret = create_socket();
-	RETURNIFTRUE(ret == false, "create socket failed");
-
-	ret = connect();
-	RETURNIFTRUE(ret == false, "connect to srver failed");
-}
-
-void FakeTCP::send(std::vector<int> &data)
-{
-	printf("FakeTCP: send\n");
-
-	/* write(fd, ...) */
-
-/*
-	std::cout << "DATA:";
-	for (size_t i = 0; i < data.size(); i++)
-		std::cout << data[i] << " ";
-*/
-
-	of.open(file_name);
-	EXITIFTRUE(of.fail(), "open output \"%s\" file failed", file_name.c_str());
-
-	of << "<root>\n";
-	of << "  <primes> ";
-	for (size_t i = 0; i < data.size(); i++)
-		of << data[i] << " ";
-	of << "  </primes>\n";
-	of << "</root>";
-
-	of.close();
-}
+void FakeTCP::set_data(std::vector<int> &data_) {data = data_;}
+std::vector<int> & FakeTCP::get_data() {return data;}

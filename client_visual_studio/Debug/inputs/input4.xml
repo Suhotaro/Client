@@ -1,0 +1,16 @@
+<root>
+  <intervals>
+    <interval>
+      <low> 0 </low>
+      <high> 1000 </high>
+    </interval>
+    <interval>
+      <low> 1000 </low>
+      <high> 2000 </high>
+    </interval>
+    <interval>
+      <low> 2000 </low>
+      <high> 3000 </high>
+    </interval>
+  </intervals>
+</root>

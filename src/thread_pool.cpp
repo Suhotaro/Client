@@ -33,12 +33,12 @@ works_threads_joiner(works_threads), puller_joiner(puller)
 ThreadPool::~ThreadPool()
 {
 	works_run = false;
-
+	
 	/* Wait until all threads are stoped */
 	for (unsigned int i = 0; i < works_threads.size(); i++)
 		if (works_threads[i].joinable())
 			works_threads[i].join();
-
+	
 	puller_run = false;
 
 	if (puller->joinable())
@@ -70,15 +70,14 @@ void ThreadPool::worker_thread()
 			return;
 		}
 
-		Job job = works_queue.front();
+		std::shared_ptr<Job> job = works_queue.front();
 		works_queue.pop_front();
 
 		works_queue_mutex.unlock();
 
-		printf("POOL: process job\n");
-
 		Buffer &buffer = buffers[std::this_thread::get_id()];
-		job(buffer);
+		job->do_job();
+		job->collect_data(buffer);
 	}
 }
 
@@ -92,96 +91,53 @@ bool ThreadPool::do_jobs()
 		return false;
 	}
 
-	Job job = works_queue.front();
-	works_queue.pop_front();
+	std::vector<std::shared_ptr<Job>> subjobs;
 
-	int low = job.get_low();
-	int high = job.get_high();
-	int range = high - low;
-
-	Buffer &buffer = buffers[std::this_thread::get_id()];
-
-	if (range <= max_range)
+	int tmp = threads_per_cpu;	
+	while (tmp != 0)
 	{
-		statistic_do(1);
+		if (works_queue.empty())
+			break;
+		
+		subjobs.push_back(works_queue.front());
+		works_queue.pop_front();
 
-		works_queue_mutex.unlock();
-
-		printf("POOL: no paralelize case @@@@@@@@@");
-
-		job(buffer);
-		return true;
+		tmp -= 1;
 	}
 
-	printf("POOL: paralelize case #########\n");
+	works_queue_mutex.unlock();
 
-	int rest = range % max_range;
-	int chanks =  range / max_range;
-	int cut = high - ((chanks - threads_per_cpu) * max_range) - rest;
+	statistic_collect(subjobs.size());
 
 	std::vector<std::thread> sub_workers_threads;
 
-	if (chanks > threads_per_cpu)
+	for (unsigned int i = 0; i < subjobs.size(); i++)
+		sub_workers_threads.push_back(std::thread(&Job::do_job, subjobs[i]));		
+
+	Buffer &buffer = buffers[std::this_thread::get_id()];
+
+	for (unsigned int i = 0; i < subjobs.size(); i++)
 	{
-		printf("POOL: split 1111111111\n");
-
-		/* TODO: It might be possible that the job could be skipped on destroing the pool */
-		works_queue.push_back(Job(cut, high - rest));
-		works_queue_mutex.unlock();
-
-		statistic_do(1);
-
-		printf("POOL: split 1111111111 %dx%d\n", cut, high - rest);
-
-		for (int i = low; i < cut; i+=max_range)
-		{
-			if (i+max_range >= cut)
-				sub_workers_threads.push_back(std::thread(Job(i, i+max_range+rest), std::ref(buffer)));
-			else
-				sub_workers_threads.push_back(std::thread(Job(i, i+max_range), std::ref(buffer)));
-		}
-	}
-	else
-	{
-		works_queue_mutex.unlock();
-
-		printf("POOL: split 22222222222");
-
-		for (int i = low; i < high - rest; i+=max_range)
-		{
-			statistic_do(1);
-
-			if (i+max_range >= high - rest)
-				sub_workers_threads.push_back(std::thread(Job(i, i+max_range+rest), std::ref(buffer)));
-			else
-				sub_workers_threads.push_back(std::thread(Job(i, i+max_range), std::ref(buffer)));
-		}
-	}
-
-	for (unsigned int i = 0; i < sub_workers_threads.size(); i++)
 		sub_workers_threads[i].join();
-
+		subjobs[i]->collect_data(buffer);
+	}
+			
 	return true;
 }
 
 /* public functions */
-void ThreadPool::start_job(int low, int high)
+void ThreadPool::schedule_job(std::shared_ptr<Job> job)
 {
 	std::lock_guard<std::mutex> guard(works_queue_mutex);
-
-	works_queue.push_back(Job(low, high));
+	std::vector<std::shared_ptr<Job>> v(job->divide_job());
+	for (unsigned int i = 0; i < v.size(); i++)
+		works_queue.push_back(v[i]);
 }
 
-void ThreadPool::show()
+void ThreadPool::inspect_jobs()
 {
 #if 0
-	for (int i = 0; i < num_threads; i++)
-	{
-		printf("buffer:%d\n", i+1);
-		while(!buffers[i].is_empty())
-			printf(" %d", buffers[i].get_front());
-		printf("\n\n");
-	}			
+	/* TODO: show each Job content */
 #endif
 }
 
@@ -201,7 +157,7 @@ void ThreadPool::collect_data_and_send()
 		{
 			printf("POOL: send data ------>>\n");
 
-			std::thread sender(&ThreadPool::send, this, std::ref(data));
+			std::thread sender(&ThreadPool::sender_thread, this, std::ref(data));
 			sender.join();
 		}
 	}
@@ -222,14 +178,14 @@ void ThreadPool::pull()
 	printf("POOL: stop pull <<+++++++\n");
 }
 
-void ThreadPool::send(std::vector<int> &data)
+void ThreadPool::sender_thread(std::vector<int> &data)
 {
 	FakeTCP tcp("127.0.0.1:80");
 	tcp.set_data(data);
 	tcp.send();
 }
 
-void ThreadPool::statistic_do(int num)
+void ThreadPool::statistic_collect(int num)
 {
 	statistic_mutex.lock();
 

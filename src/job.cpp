@@ -2,60 +2,73 @@
 
 #include "job.h"
 
-void Job::calculate_pime_numbers(Buffer &buffer, int from, int to)
-{
-	if (to < from)
+
+void PrimeNumbersJob::calculate() {
+	if (l > h)
 		return;
-	
+
+	printf("PRIMEJOB: start %d %d\n", l, h);
+
 	/* Eratosthenes's algorithm with a minor optimization which gives us:
-	 * time : O(log(log(n)))
-	 * memory: O(n)
-	 * 
-	 * TODO: decrease memory consumption to n/2
-	 * TODO: yet not optimized to calculte numbers "from  to "to", it calculate prime
-	 * numbers from 2 to "to"
-	 */
-	for(int i = 0; i < to; i++)
+	* time : O(log(log(n)))
+	* memory: O(n)
+	*
+	* TODO: decrease memory consumption to n/2
+	* TODO: yet not optimized to calculte numbers "from  to "to", it calculate prime
+	* numbers from 2 to "to"
+	*/
+	for (int i = 0; i < h; i++)
 		v.push_back(1);
 
 	v[0] = 0;
 	v[1] = 0;
-	
-	for(unsigned int current_number = 2; current_number < v.size(); current_number++)
+
+	for (unsigned int current_number = 2; current_number < v.size(); current_number++)
 	{
 		if (1 == v[current_number])
 		{
 			int power_two = current_number*current_number;
 
-			for(size_t not_prime = power_two; not_prime < v.size(); not_prime+=current_number)
+			for (size_t not_prime = power_two; not_prime < v.size(); not_prime += current_number)
 				v[not_prime] = 0;
 		}
 	}
+}
 
-	buffer.set_used();
-	/* Write result to a buffer */
-	for(int i = from; i < to; i++)
+void PrimeNumbersJob::collect_data(Buffer &buffer) {
+	for (int i = l; i < h; i++)
 		if (1 == v[i])
 			buffer.add_back(i);
-			
-	buffer.set_unused();
 }
 
-void Job::operator() (Buffer &buffer, int from, int to)
+
+std::vector<std::shared_ptr<Job>> PrimeNumbersJob::divide_job()
 {
-	printf("JOB: do subjob:%d %d\n", low, high);
-	
-	calculate_pime_numbers(buffer, from, to);
-	
-	printf("JOB: done subjob\n");	
-}
+	std::vector<std::shared_ptr<Job>> jobs;
 
-void Job::operator() (Buffer &buffer)
-{
-	printf("JOB: do job:%d %d\n", low, high);
-	
-	calculate_pime_numbers(buffer, low, high);
-	
-	printf("JOB: done job\n");
-}
+	if (h - l <= RANGE)
+	{
+		printf("DIVIDE JOB\n");
 
+		jobs.push_back(std::shared_ptr<Job>(new PrimeNumbersJob(l, h)));
+		return jobs;
+	}
+
+	int chunk = (h-l) % RANGE;
+
+	for (int i = l; i <= h; i+= RANGE)
+	{
+		if (i + RANGE >= h)
+		{
+			printf("DIVIDE JOB:%d %d\n", i, i + chunk);
+			jobs.push_back(std::shared_ptr<Job>(new PrimeNumbersJob(i, i + chunk)));
+		}		
+		else
+		{
+			printf("DIVIDE JOB:%d %d\n", i, i + RANGE);
+			jobs.push_back(std::shared_ptr<Job>(new PrimeNumbersJob(i, i + RANGE)));
+		}			
+	}
+
+	return jobs;
+}

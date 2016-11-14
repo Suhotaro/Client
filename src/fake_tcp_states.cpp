@@ -14,7 +14,7 @@ void FakeTCPStateEstablish::step(FakeTCP &fake_tcp)
 	if (true)
 	{
 		std::unique_ptr<FakeTCPSend> send = std::unique_ptr<FakeTCPSend> (new FakeTCPSend());
-		fake_tcp.set_state(send);	
+		fake_tcp.set_state(send);
 	}
 	else
 	{
@@ -61,7 +61,11 @@ void FakeTCPSend::step(FakeTCP &fake_tcp)
 	std::ofstream of;
 	
 	of.open(file_name);
-	EXITIFTRUE(of.fail(), "open output \"%s\" file failed", file_name.c_str());
+	if (of.fail())
+	{
+		printf("open output \"%s\" file failed", file_name.c_str());
+		exit(0);
+	}
 	
 	std::vector<int> &data = fake_tcp.get_data();
 	int num_chunks = 1;

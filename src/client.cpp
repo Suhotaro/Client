@@ -15,7 +15,11 @@ Client::Client(std::string file_name) {
 	pool = std::unique_ptr<ThreadPool>(new ThreadPool());
 
 	perr = parser->init();
-	EXITIFTRUE(perr != PARSER_ERROR_NONE, "init pareser failed");
+	if (perr != PARSER_ERROR_NONE)
+	{
+		printf("init pareser failed\n");
+		exit(0);
+	}	
 
 	printf( "-----------------------------\n"
 			"Client info:\n"
@@ -33,20 +37,19 @@ Client::~Client()
 void Client::start()
 {
 	parser_error perr = PARSER_ERROR_NONE;
-	int low, high;
 	
 	std::cout << "Client: I have started working" << std::endl;
-		
-	while ((perr = parser->process(low, high)) == PARSER_ERROR_NONE)
-	{
-		printf("Client: I am working: low:%d high:%d\n", low, high);
 
-		pool->start_job(low, high);
+	std::shared_ptr<Job> job;
+	while ((perr = parser->process(job)) == PARSER_ERROR_NONE)
+	{
+		printf("Client: schedule job\n");
+		pool->schedule_job(job);
 	}
-	
+
 	parser->deinit();
 	
-	std::this_thread::sleep_for (std::chrono::seconds(2));
+	std::this_thread::sleep_for (std::chrono::seconds(5));
 
 	std::cout << "Client: I finished working" << std::endl;
 }

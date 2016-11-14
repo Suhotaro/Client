@@ -2,25 +2,33 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <memory>
 
 #include "parser.h"
 #include "util.h"
+#include "job.h"
 
 parser_error XMLParser::init()
 {
 	std::cout << "XMLParser: init" << std::endl;
 
 	in.open (file_name, std::ifstream::in);
-	EXITIFTRUE(in.fail(), "open \"%s\" file failed", file_name.c_str());
-
+	if (in.fail())
+	{
+		printf("open \"%s\" file failed", file_name.c_str());
+		exit(0);
+	}
+	
 	return PARSER_ERROR_NONE;
 }
 
-parser_error XMLParser::process(int &low, int &high)
+parser_error XMLParser::process(std::shared_ptr<Job> &job)
 {
 	std::string line;
 	std::string value;
 	std::string trash;
+
+	int low = 0, high = 0;
 
 	while (!in.eof()) {
 		std::getline(in, line);
@@ -45,7 +53,8 @@ parser_error XMLParser::process(int &low, int &high)
 			iss >> value;
 			high = atoi(value.c_str());
 
-			//std::cout << "range: " << low << " " << high << std::endl;
+			std::cout << "range: " << low << " " << high << std::endl;
+			job = std::shared_ptr<Job>(new PrimeNumbersJob(low, high));
 
 			return PARSER_ERROR_NONE;
 		}

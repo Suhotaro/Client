@@ -5,38 +5,40 @@
 #include "buffer.h"
 
 class Job
+{	
+	virtual void calculate() = 0;
+
+public:
+	Job() {}
+	virtual ~Job() {}
+
+	void do_job() {
+
+		printf("start do_hob\n");
+
+		calculate();
+	}
+
+	virtual void collect_data(Buffer &buffer) = 0;
+	virtual std::vector<std::shared_ptr<Job>> divide_job() = 0;
+};
+
+class PrimeNumbersJob : public Job
 {
-private:
-	int low;
-	int high;
+	enum {RANGE = 20};
+	int range = RANGE;
 	
+	int l, h;
 	std::vector<int> v;
 
-	void calculate_pime_numbers(Buffer &buffer, int from, int to);
-	
+	void calculate();
+
 public:
-	Job () = delete;
-	Job (int low_, int high_) : low(low_), high(high_) {}
+	PrimeNumbersJob(int l_, int h_): l(l_), h(h_) {}
+	~PrimeNumbersJob() {}
 		
-	Job(const Job& job) : low(job.low), high(job.high) {}
-	Job& operator=(const Job& job)
-    {
-		low = job.low;
-		high = job.high;
-
-    	return *this;
-    }
-	
-	Job(Job&& job) : low(std::move(job.low)), high(std::move(job.high)) { }
-
-	/* calculcates prime numbers from "low" to "high" and stores result in buffer */
-	void operator() (Buffer &buffer);
-	
-	/* calculcates prime numbers from "from" to "to" and stores result in buffer */
-	void operator() (Buffer &buffer, int from, int to);
-	
-	int get_low() { return low; }
-	int get_high() { return high; }
+	void collect_data(Buffer &buffer);
+	std::vector<std::shared_ptr<Job>> divide_job();
 };
 
 #endif //__JOB_H__

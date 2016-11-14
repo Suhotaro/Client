@@ -20,45 +20,43 @@ private:
 		  MAX_RANGE = 20,};
 
 	int threads_per_cpu = THREADS_PER_CPU;
-	int max_range = MAX_RANGE;
+	int max_range = MAX_RANGE;		
 
+	/* Work threads */
 	std::atomic_bool works_run;
-	std::deque<Job> works_queue;
 	std::mutex works_queue_mutex;
+	std::deque<std::shared_ptr<Job>> works_queue;
 	std::vector<std::thread> works_threads;
 	JoinedThreads works_threads_joiner;
-
 	std::map<std::thread::id, Buffer> buffers;
-
+	
+	void worker_thread();
+	bool do_jobs();
+	
+	/* Puller */
 	std::unique_ptr<std::thread> puller;
 	JoinedThread puller_joiner;
 	bool puller_run;
 
+	void pull();
+	void collect_data_and_send();
+	void sender_thread(std::vector<int> &data);
+	
+
+	/* Statistic */
 	std::map<std::thread::id, int> statistic;
 	std::mutex statistic_mutex;
 
-	/* works_threads's procedure */
-	void worker_thread();
-
-	/* puller procedure */
-	void pull();
-	
-	/* sender procedure */
-	void send(std::vector<int> &data);
-
-	void collect_data_and_send();
-	bool do_jobs();
-
-	void statistic_do(int num);
-	void statistic_show();
+	void statistic_collect(int num);	
 
 public:
 	ThreadPool();
 	~ThreadPool();
 	
-	void start_job(int low, int high);
-	
-	void show();
+	void schedule_job(std::shared_ptr<Job> job);
+	void inspect_jobs();
+
+	void statistic_show();
 };
 
 #endif //__THREAD_POOL_H__

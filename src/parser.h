@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include "util.h"
+#include "job.h"
 #include <fstream>
 
 /* TODO: Find better error handling mechanism */
@@ -37,7 +38,7 @@ public:
 	 * @returns PARSER_ERROR_NONE on success, PARSER_ERROR_EOF if file has been
 	 * red till the end, any other error on filure.
 	 */
-    virtual parser_error process(int &low, int &high) = 0;
+    virtual parser_error process(std::shared_ptr<Job> &job) = 0;
 
     /**
      * @brief Finilizes a parser
@@ -71,7 +72,7 @@ public:
     std::string get_file_name() final { return file_name; }
 
     parser_error init() final;
-    parser_error process(int &low, int &high) final;
+    parser_error process(std::shared_ptr<Job> &job) final;
 	void deinit() final;
 };
 
